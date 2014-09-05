@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+    <head lang="en">
+        <meta charset="UTF-8">
+        <title></title>
+        {% load staticfiles %}
+        <link href="{% static "SMYT/bootstrap-3.2.0-dist/css/bootstrap.min.css" %}" rel="stylesheet" />
+        <link href="{% static "SMYT/bootstrap-3.2.0-dist/css/bootstrap-theme.css" %}" rel="stylesheet" />
+        <script src="{% static "SMYT/jquery/dist/jquery.js" %}" type="text/javascript" ></script>
+        <script src="{% static "SMYT/bootstrap-3.2.0-dist/js/bootstrap.min.js" %}" ></script>
+    </head>
+    <body>
+        <div class="row">
+            <div class="col-md-3">
+                {% if models %}
+                    <ul>
+                        {% for model, value in models.items %}
+                            <li>
+                                <a href="{% url 'data_all' model %}">{{ value.title }}</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <div class="col-md-9">
+                <table class="table">
+                    <tr>
+                        <td>
+                            111
+                        </td>
+                        <td>
+                            222
+                        </td>
+                    </tr>
+
+                </table>
+            </div>
+        </div>
+
+
+
+    </body>
+</html>

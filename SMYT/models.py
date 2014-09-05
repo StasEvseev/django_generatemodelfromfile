@@ -1,23 +1,11 @@
-import os
-import yaml
-
-from django.db import models
-
-from SMYT import classfactory
-
-def init_models():
-    NAME = os.path.dirname(__file__) + "/scheme.yaml"
-    modelsscheme = yaml.load(open(NAME).read())
-
-    models = []
-
-    for model in modelsscheme:
-        models.append(classfactory(model, modelsscheme[model]))
-    return models
+from SMYT.helpers import classfactory, import_models
 
 
-class A(models.Model):
-    name = models.CharField("bla", max_length=50)
+def init_models(models):
+    mdls = {}
+    for model in models:
+        mdls[model] = (classfactory(model, models[model]))
+    return mdls
 
-
-MODELS = init_models()
+SCHEME_MODELS = import_models()
+MODELS = init_models(SCHEME_MODELS)
