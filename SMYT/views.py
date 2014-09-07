@@ -11,16 +11,23 @@ def index(request):
     return render(request, 'index.html', {'models': SCHEME_MODELS})
 
 
-def data_all(request, model):
-    return data(request, model, None)
+# def data_all(request, model):
+#     return data(request, model, None)
 
 
-def data(request, model, obj_id):
-    if obj_id is None:
-        res = [_get_data(mdl, model) for mdl in MODELS[model].objects.all()]
-    else:
-        res = _get_data(
-            get_object_or_404(MODELS[model], pk=obj_id), model)
+# def data(request, model, obj_id):
+#     if obj_id is None:
+#         res = [_get_data(mdl, model) for mdl in MODELS[model].objects.all()]
+#     else:
+#         res = _get_data(
+#             get_object_or_404(MODELS[model], pk=obj_id), model)
+#     return HttpResponse(json.dumps(res, cls=DjangoJSONEncoder), content_type="application/json")
+
+
+def data_scheme_all(request, model):
+    res = [_get_data(mdl, model) for mdl in MODELS[model].objects.all()]
+    res = {'records': res,
+           'meta': SCHEME_MODELS[model]}
     return HttpResponse(json.dumps(res, cls=DjangoJSONEncoder), content_type="application/json")
 
 

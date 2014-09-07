@@ -14,26 +14,13 @@
         <div class="row">
             <div class="col-md-3">
                 {% if models %}
-                    <ul>
-                        {% for model, value in models.items %}
-                            <li>
-                                <a href="{% url 'data_all' model %}">{{ value.title }}</a>
-                            </li>
-                        {% endfor %}
-                    </ul>
+                    <div id="list-model">
+                    </div>
                 {% endif %}
             </div>
 
             <div class="col-md-9">
                 <table id="maintable" class="table">
-                    <tr>
-                        <td>
-                            111
-                        </td>
-                        <td>
-                            222
-                        </td>
-                    </tr>
 
                 </table>
             </div>
