@@ -72,6 +72,7 @@
     }
 
     var TableModelConstr = function(ids, initConfig) {
+
         this.table = ids;
         this.config = initConfig;
 
@@ -79,11 +80,18 @@
             table.addClass("table");
         };
 
-        this.createTableFromStructure = function(tableId, structure) {
+        createTableFromStructure.call(this, ids, initConfig);
+
+        this.init = function(initConfig) {
+            createTableFromStructure.call(this, this.table, initConfig);
+        };
+
+        function createTableFromStructure(tableId, structure) {
             tableId.empty();
             var table = $('<table>');
             this.initTable(table);
             var fields = [];
+            tableId.append(table);
 
             if (structure['fields']) {
                 var tr = $('<tr>');
@@ -94,6 +102,9 @@
                     tr.append($('<td>').append(
                         $('<div>').text(structure['fields'][i]['title'])));
                 }
+
+                tableId.append($('<div>').css({'border':'solid 2px black'}).append(initForm.call(this, $('<form>'), "Новая запись", structure['fields'])));
+
             }
 
             if (structure['records']) {
@@ -110,15 +121,37 @@
                     }
                 }
             }
-
-            tableId.append(table);
-        };
-
-        this.createTableFromStructure(ids, initConfig);
-
-        this.init = function(initConfig) {
-            this.createTableFromStructure(this.table, initConfig);
         }
+
+        function initForm(form, title, fields) {
+            form.addClass("form-horizontal");
+            form.append($("<h4>").text(title));
+            for(var i = 0; i < fields.length; i++) {
+                form.append(createField(fields[i]['type'], fields[i]['title']));
+            }
+
+            form.append($("<button>").text("Сохранить").on("click", function(event) {
+                event.preventDefault();
+                console.log("BLA");
+            }));
+
+            function createField(type, title) {
+                var div = $('<div>').addClass("form-group");
+                var idfld = Math.floor(Math.random()*11);
+
+                div.append($('<label>').attr("for", idfld).text(title).addClass("col-sm-2 control-label"));
+                var input = $('<input>').attr("type", "text").attr("id", idfld).addClass("form-control");
+                div.append($("<div>").addClass("col-sm-10").append(input));
+                if (type == "date") {
+                    input.datepicker();
+                }
+                return div;
+            }
+
+            return form;
+        }
+
+
     };
 
 })(window, jQuery);
