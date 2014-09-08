@@ -3,35 +3,31 @@
 
 
     $(function(){
-        var maintable = $("#maintable");
+        var mainTableEl = $("#maintable");
+        var listModelEl = $("#list-model");
 
-        var listModelObject = new listModelConstr($("#list-model"), {records: [
+        var listModelObject = new ListModelConstr(listModelEl, {records: [
             {title: 'Пользователи', id: 'users'},
             {title: 'Комнаты', id: 'rooms'}
         ]});
 
-        var tableModelObject = new tableModelConstr(maintable, {fields: [
-            {type: 'int', id: "aaaaa", title: 'Имя'},
-            {type: 'char', id: "bbbbb", title: 'Зарплата'},
-            {type: 'date', id: "ccccc", title: 'Дата поступления на работу'}
+        var tableModelObject = new TableModelConstr(mainTableEl, {});
 
-        ]});
+        listModelEl.on("click-item", function(event, type) {
+            $.ajax({
+                url: "/smyt/" + type + "/",
+                success: function(data) {
+                    tableModelObject.init({fields: data['meta']['fields'], records: data['records']});
+                },
+                failure: function() {
 
-        create_table_from_structure(maintable, {
-            fields: [
-                {type: 'int', id: "aaaaa", title: 'Имя'},
-                {type: 'char', id: "bbbbb", title: 'Зарплата'},
-                {type: 'date', id: "ccccc", title: 'Дата поступления на работу'}
-            ],
-            records: [
-                {aaaaa: "1", bbbbb: "2", ccccc: "3"},
-                {aaaaa: "4", bbbbb: "5", ccccc: "6"},
-                {aaaaa: "7", bbbbb: "8", ccccc: "9"}
-            ]
+                }
+            });
         });
+
     });
 
-    function listModelConstr(idel, initConfig) {
+    function ListModelConstr(idel, initConfig) {
         this.ulList = idel;
         this.config = initConfig;
         this.listModel = initConfig['records'];
@@ -40,17 +36,32 @@
             this.render(this.listModel);
         };
 
+        this.initLiItem = function(el) {
+            el.css({cursor: 'pointer'});
+        };
+
+        this.selItem = function(el) {
+            el.css({'font-weight': 'bold'});
+        };
+
+        this.unselItems = function() {
+            this.ulList.find("li").css({'font-weight': ''});
+        };
+
         this.render = function(models) {
             this.ulList.empty();
             var ul = $("<ul>");
             for(var i = 0; i < models.length; i++) {
                 var name = models[i]['id'];
                 var li = $('<li>').text(models[i]['title']);
-                (function(name) {
+                this.initLiItem(li);
+                (function(name, el, ths) {
                     li.on('click', function(event) {
-                        console.log(name);
+                        ths.unselItems();
+                        ths.selItem(el);
+                        ths.ulList.trigger("click-item", [name]);
                     });
-                })(name);
+                })(name, li, this);
 
                 ul.append(li);
             }
@@ -58,66 +69,56 @@
         };
 
         this.initFunc();
-
-        return {
-
-        }
     }
 
-    var tableModelConstr = function(ids, initConfig) {
+    var TableModelConstr = function(ids, initConfig) {
         this.table = ids;
         this.config = initConfig;
 
-        
+        this.initTable = function(table) {
+            table.addClass("table");
+        };
 
-        this.create_table_from_structure = function(table, structure) {
-        table.empty();
+        this.createTableFromStructure = function(tableId, structure) {
+            tableId.empty();
+            var table = $('<table>');
+            this.initTable(table);
+            var fields = [];
 
-        var fields = [];
-        var tr = $('<tr>');
-        table.append($('<thead>')
-            .append(tr));
-        for(var i = 0; i < structure['fields'].length; i++) {
-            fields.push(structure['fields'][i]['id']);
-            tr.append($('<td>').append(
-                $('<div>').text(structure['fields'][i]['title'])));
-        }
-
-        for(var i = 0; i < structure['records'].length; i++) {
-            tr = $('<tr>');
-            table.append($('<tbody>').append(tr));
-            for(var c = 0; c < fields.length; c++) {
-                tr.append($('<td>').append($('<div>').text(
-                    structure["records"][i][fields[c]]
-                )));
+            if (structure['fields']) {
+                var tr = $('<tr>');
+                table.append($('<thead>')
+                    .append(tr));
+                for(var i = 0; i < structure['fields'].length; i++) {
+                    fields.push(structure['fields'][i]['id']);
+                    tr.append($('<td>').append(
+                        $('<div>').text(structure['fields'][i]['title'])));
+                }
             }
 
-        }
-    };
-    };
+            if (structure['records']) {
+                var tbody = $('<tbody>');
+                table.append(tbody);
 
-    var create_table_from_structure = function(table, structure) {
-        table.empty();
-
-        var fields = [];
-        var tr = $('<tr>');
-        table.append($('<thead>')
-            .append(tr));
-        for(var i = 0; i < structure['fields'].length; i++) {
-            fields.push(structure['fields'][i]['id']);
-            tr.append($('<td>').append(
-                $('<div>').text(structure['fields'][i]['title'])));
-        }
-
-        for(var i = 0; i < structure['records'].length; i++) {
-            tr = $('<tr>');
-            table.append($('<tbody>').append(tr));
-            for(var c = 0; c < fields.length; c++) {
-                tr.append($('<td>').append($('<div>').text(
-                    structure["records"][i][fields[c]]
-                )));
+                for(var i = 0; i < structure['records'].length; i++) {
+                    tr = $('<tr>');
+                    tbody.append(tr);
+                    for(var c = 0; c < fields.length; c++) {
+                        tr.append($('<td>').append($('<div>').text(
+                            structure["records"][i][fields[c]]
+                        )));
+                    }
+                }
             }
 
+            tableId.append(table);
+        };
+
+        this.createTableFromStructure(ids, initConfig);
+
+        this.init = function(initConfig) {
+            this.createTableFromStructure(this.table, initConfig);
         }
     };
+
 })(window, jQuery);
