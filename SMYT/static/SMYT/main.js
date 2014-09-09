@@ -71,25 +71,31 @@
         this.initFunc();
     }
 
-    var TableModelConstr = function(ids, initConfig) {
+    function TableModelConstr(ids, initConfig) {
 
         this.table = ids;
         this.config = initConfig;
+        this.tableEl = undefined;
 
         this.initTable = function(table) {
             table.addClass("table");
         };
 
-        createTableFromStructure.call(this, ids, initConfig);
-
         this.init = function(initConfig) {
             createTableFromStructure.call(this, this.table, initConfig);
         };
+
+        this.getTableEl = function() {
+            return this.tableEl;
+        };
+
+        createTableFromStructure.call(this, ids, initConfig);
 
         function createTableFromStructure(tableId, structure) {
             tableId.empty();
             var table = $('<table>');
             this.initTable(table);
+            this.tableEl = table;
             var fields = [];
             tableId.append(table);
 
@@ -103,7 +109,8 @@
                         $('<div>').text(structure['fields'][i]['title'])));
                 }
 
-                tableId.append($('<div>').css({'border':'solid 2px black'}).append(initForm.call(this, $('<form>'), "Новая запись", structure['fields'])));
+                tableId.append($('<div>').css({'border':'solid 2px black'}).append(
+                    initForm.call(this, $('<form>'), "Новая запись", structure['fields'])));
 
             }
 
@@ -121,37 +128,60 @@
                     }
                 }
             }
-        }
 
-        function initForm(form, title, fields) {
+            function initForm(form, title, fields) {
             form.addClass("form-horizontal");
             form.append($("<h4>").text(title));
+            var fldForm = [];
             for(var i = 0; i < fields.length; i++) {
-                form.append(createField(fields[i]['type'], fields[i]['title']));
+                var fld = new CreateField(fields[i]['type'], fields[i]['id'], fields[i]['title']);
+                fldForm.push(fld);
+                form.append(fld.getEl());
             }
 
             form.append($("<button>").text("Сохранить").on("click", function(event) {
                 event.preventDefault();
-                console.log("BLA");
+                $.post('/smyt/users/', getDatas(fldForm)).done(function() {
+                    
+                    console.log("DONE");
+                });
             }));
 
-            function createField(type, title) {
-                var div = $('<div>').addClass("form-group");
+            function getDatas(flds) {
+                var data = {};
+                for(var i = 0; i < flds.length; i++) {
+                    var dt = flds[i].getData();
+                    data[dt[0]] = dt[1];
+                }
+                return data;
+            }
+
+            function CreateField(type, name, title) {
+                this.el = $('<div>').addClass("form-group");
                 var idfld = Math.floor(Math.random()*11);
 
-                div.append($('<label>').attr("for", idfld).text(title).addClass("col-sm-2 control-label"));
-                var input = $('<input>').attr("type", "text").attr("id", idfld).addClass("form-control");
-                div.append($("<div>").addClass("col-sm-10").append(input));
+                this.el.append($('<label>').attr("for", idfld).text(title).addClass("col-sm-2 control-label"));
+                this.input = $('<input>').attr("type", "text").attr("id", idfld).attr("name", name).addClass("form-control");
+                this.el.append($("<div>").addClass("col-sm-10").append(this.input));
                 if (type == "date") {
-                    input.datepicker();
+                    this.input.datepicker();
                 }
-                return div;
+                this.getInput = function() {
+                    return this.input;
+                };
+
+                this.getEl = function() {
+                    return this.el;
+                };
+
+                this.getData = function() {
+                    return [this.input.attr("name"), this.input.val()]
+                };
             }
 
             return form;
         }
-
-
-    };
+        }
+    }
 
 })(window, jQuery);

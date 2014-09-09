@@ -6,5 +6,5 @@ urlpatterns = patterns('',
     url(r'^$', views.index, name='index'),
     #url(r'^(?P<model>\w+)/$', views.data_all, name='data_all'),
     #url(r'^(?P<model>\w+)/(?P<obj_id>\d+)$', views.data, name='data'),
-    url(r'^(?P<model>\w+)/$', views.data_scheme_all, name='data_all'),
+    url(r'^(?P<scheme>\w+)/$', views.data_scheme_all, name='data_all'),
 )
