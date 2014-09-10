@@ -26,7 +26,6 @@ def index(request):
 
 
 def data_scheme_all(request, scheme):
-    print request.method
     if request.method == "POST":
         Model = MODELS[scheme]
         Model(**_get_data_from_js(request.POST, scheme)).save()
@@ -36,6 +35,20 @@ def data_scheme_all(request, scheme):
         res = {'records': res,
                'meta': SCHEME_MODELS[scheme]}
         return HttpResponse(json.dumps(res, cls=DjangoJSONEncoder), content_type="application/json")
+
+
+def record_save(request, scheme, obj_id):
+    if request.method == "POST":
+        Model = MODELS[scheme]
+        instance = Model.objects.get(id=obj_id)
+        data = _get_data_from_js(request.POST, scheme)
+        instance.__dict__.update(data)
+        instance.save()
+        return HttpResponse()
+
+
+def scheme_all(request):
+    return HttpResponse(json.dumps({'meta': SCHEME_MODELS}, cls=DjangoJSONEncoder), content_type="application/json")
 
 
 def _fill_data(sch, model):
@@ -58,7 +71,7 @@ def _get_data_from_js(model, schema):
     for fld in flds:
         fld_name = fld['id']
         if fld['type'] == 'date':
-            value = datetime.datetime.strptime(model[fld_name], "%m/%d/%Y")
+            value = datetime.datetime.strptime(model[fld_name], "%Y-%m-%d")
         else:
             value = model[fld_name]
 
