@@ -1,9 +1,11 @@
+import json
 import string
 import random
 
 from datetime import date
 
-from django.test import TestCase
+from django.test import TestCase, Client
+from django.core.urlresolvers import reverse
 
 from SMYT.models import MODELS, SCHEME_MODELS
 
@@ -30,32 +32,57 @@ def generate_data(type):
     }[type]()
 
 
+def generate_data_to_model(mdl):
+    data = {}
+    fiels = SCHEME_MODELS.get(mdl)['fields']
+    for fld in fiels:
+        data[fld['id']] = generate_data(fld['type'])
+    return data
+
+
 class ModelsTestCase(TestCase):
     COUNT = 10
 
     def setUp(self):
-        self.models_data = {}
+        self.client = Client()
         for sch_mdl in SCHEME_MODELS:
             for x in xrange(ModelsTestCase.COUNT):
-                data = {}
-                fiels = SCHEME_MODELS.get(sch_mdl)['fields']
-                for fld in fiels:
-                    data[fld['id']] = generate_data(fld['type'])
+                data = generate_data_to_model(sch_mdl)
                 Model = MODELS.get(sch_mdl)
-                if x == 0:
-                    self.models_data[sch_mdl] = data
-
                 Model.objects.create(**data)
-
-    def get_models_data(self, model):
-        return self.models_data[model]
 
     def test_models_count(self):
         for sch_mdl in SCHEME_MODELS:
             self.assertEqual(MODELS.get(sch_mdl).objects.count(), ModelsTestCase.COUNT)
 
-    def test_query(self):
-        for sch_mdl in SCHEME_MODELS:
-            Model = MODELS.get(sch_mdl)
-            data = self.get_models_data(sch_mdl)
-            self.assertIsNotNone(Model.objects.filter(**data))
+    def test_metadata(self):
+        resp = self.client.get(reverse('scheme_all'))
+        self.assertEqual(resp.status_code, 200)
+        cont = resp.content
+        meta = json.loads(cont)['meta']
+        for mdl in meta:
+            self.assertEqual(SCHEME_MODELS[mdl], meta[mdl])
+
+    def test_get_model(self):
+        for model in SCHEME_MODELS:
+            resp = self.client.get(reverse('data_all', kwargs={'scheme': model}))
+            self.assertEqual(resp.status_code, 200)
+            records = json.loads(resp.content)['records']
+            self.assertEqual(len(records), ModelsTestCase.COUNT)
+
+    def test_post_model(self):
+        for model in SCHEME_MODELS:
+            Model = MODELS[model]
+            intance = Model.objects.first()
+            _id = intance.id
+
+            new_data = generate_data_to_model(model)
+
+            resp = self.client.post(path=reverse('record-save', kwargs={'scheme': model, 'obj_id': _id}),
+                                    data=new_data)
+            self.assertEqual(resp.status_code, 200)
+
+            new_intance = Model.objects.get(id=_id)
+
+            for fld in new_data:
+                self.assertEqual(new_data[fld], new_intance.__dict__.get(fld))
